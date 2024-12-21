@@ -40,7 +40,29 @@ jobs:
         with:
           # Upload entire repository
           path: '.'
-          
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Actions提供的默认token
+        with:
+          tag_name: ${{ github.sha }}  # 使用commit的SHA作为tag名称
+          release_name: Release ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      # 这里可以添加发布步骤，例如上传构建的artifacts到release
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./path/to/your/asset.zip  # 要上传的文件路径
+          asset_name: asset.zip  # 上传后的文件名
+          asset_content_type: application/zip  # 文件类型
