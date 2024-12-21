@@ -46,23 +46,11 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # GitHub Actions提供的默认token
+        uses: softprops/action-gh-release@v1 # 使用 GitHub Release Action
         with:
-          tag_name: ${{ github.sha }}  # 使用commit的SHA作为tag名称
-          release_name: Release ${{ github.sha }}
-          draft: false
-          prerelease: false
-
-      # 这里可以添加发布步骤，例如上传构建的artifacts到release
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+          tag_name: v${{ github.run_number }} # 使用运行编号作为版本标签
+          release_name: Release v${{ github.run_number }} # 发布名称
+          draft: false # 设置为 false 表示发布不是草稿状态
+          prerelease: false # 设置为 false 表示发布不是预发行版本
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./path/to/your/asset.zip  # 要上传的文件路径
-          asset_name: asset.zip  # 上传后的文件名
-          asset_content_type: application/zip  # 文件类型
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用 GitHub 提供的令牌进行身份验证
