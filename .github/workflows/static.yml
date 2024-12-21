@@ -13,6 +13,7 @@ on:
 permissions:
   contents: read
   pages: write
+  deployments: write
   id-token: write
 
 # Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
@@ -52,5 +53,3 @@ jobs:
           release_name: Release v${{ github.run_number }} # 发布名称
           draft: false # 设置为 false 表示发布不是草稿状态
           prerelease: false # 设置为 false 表示发布不是预发行版本
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用 GitHub 提供的令牌进行身份验证
