@@ -4,7 +4,8 @@ name: Create Release
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    tags:
+      - "v*"  # 监听以 "v" 开头的标签推送
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
