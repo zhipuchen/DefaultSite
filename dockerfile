@@ -8,8 +8,9 @@ COPY --chown=nginx:nginx . /usr/share/nginx/html
 # 如果不需要自定义配置，可以注释掉这行
 #COPY nginx.conf /etc/nginx/nginx.conf
 
-# 暴露 80 端口
+# 暴露 80 443 端口
 EXPOSE 80
+EXPOSE 443
 
 # 启动 Nginx
 CMD ["nginx", "-g", "daemon off;"]
