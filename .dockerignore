@@ -10,6 +10,9 @@
 # 排除 .dockerignore 文件
 .dockerignore
 
+# 排除 .sh 文件
+*.sh
+
 # 排除 dockerfile 文件
 dockerfile
 
