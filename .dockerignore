@@ -1,0 +1,23 @@
+# 排除以 . 开头的文件和文件夹
+.*
+
+# 排除 .git 目录
+.git/
+
+# 排除 .gitignore 文件
+.gitignore
+
+# 排除 .dockerignore 文件
+.dockerignore
+
+# 排除 dockerfile 文件
+dockerfile
+
+# 排除 node_modules 目录
+node_modules/
+
+# 排除 src 目录
+dist/
+
+# 排除 README.md 文件
+README.md
