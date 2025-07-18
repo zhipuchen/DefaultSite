@@ -1,5 +1,5 @@
 # 使用 nginx:alpine 作为基础镜像
-FROM nginx:alpine
+FROM docker.io/library/nginx:alpine
 
 # 设置工作目录
 WORKDIR /app
