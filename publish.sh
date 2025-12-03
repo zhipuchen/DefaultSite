@@ -3,11 +3,21 @@
 # 部署脚本：将项目文件复制到目标目录
 # 排除 .git、.github、.dockerignore、dockerfile 等文件
 
+# 打印环境变量日志
+echo "=========================================="
+echo "环境变量检查："
+echo "DEPLOY_TARGET_DIR (原始值): ${DEPLOY_TARGET_DIR:-未设置}"
+echo "=========================================="
+
 # 源目录（当前工作目录）
 SOURCE_DIR="."
 
 # 目标目录（可通过环境变量 DEPLOY_TARGET_DIR 覆盖）
 TARGET_DIR="${DEPLOY_TARGET_DIR:-/home/www}"
+
+# 打印最终使用的目标目录
+echo "最终使用的目标目录: $TARGET_DIR"
+echo "=========================================="
 
 # 创建目标目录（如果不存在）
 mkdir -p "$TARGET_DIR"
