@@ -103,22 +103,55 @@ else
     
     # 将临时目录内容复制到目标目录
     echo "复制文件到目标目录..."
-    cp -r "$TEMP_DIR"/* "$TARGET_DIR"/ 2>/dev/null || {
-      echo "尝试使用 find + cp 复制..."
-      cd "$TEMP_DIR" && find . -type f -exec cp --parents {} "$TARGET_DIR" \; 2>/dev/null
-      cd "$TEMP_DIR" && find . -type d -exec mkdir -p "$TARGET_DIR/{}" \; 2>/dev/null
-      cd "$TEMP_DIR" && find . -type f -exec cp {} "$TARGET_DIR/{}" \; 2>/dev/null
-    }
+    echo "临时目录内容:"
+    ls -la "$TEMP_DIR" 2>/dev/null || echo "无法列出临时目录内容"
+    
+    # 尝试使用 cp -r 复制
+    if cp -r "$TEMP_DIR"/* "$TARGET_DIR"/ 2>&1; then
+      echo "使用 cp -r 复制成功"
+    else
+      echo "cp -r 失败，尝试使用 find + cp 逐文件复制..."
+      # 先创建目录结构
+      cd "$TEMP_DIR"
+      find . -type d | while read dir; do
+        if [ "$dir" != "." ]; then
+          mkdir -p "$TARGET_DIR/$dir" 2>/dev/null
+        fi
+      done
+      
+      # 复制所有文件
+      find . -type f | while read file; do
+        target_file="$TARGET_DIR/$file"
+        target_dir=$(dirname "$target_file")
+        mkdir -p "$target_dir" 2>/dev/null
+        cp "$file" "$target_file" 2>&1 || echo "警告: 无法复制 $file"
+      done
+    fi
+    
+    # 验证复制结果
+    echo "验证复制结果..."
+    echo "目标目录内容:"
+    ls -la "$TARGET_DIR" 2>/dev/null || echo "无法列出目标目录内容"
+    
+    # 统计文件数量
+    FILE_COUNT=$(find "$TARGET_DIR" -type f 2>/dev/null | wc -l)
+    echo "目标目录文件数量: $FILE_COUNT"
     
     # 清理临时目录
     rm -rf "$TEMP_DIR" 2>/dev/null
     
     # 验证部署结果
-    if [ -d "$TARGET_DIR" ] && [ "$(ls -A $TARGET_DIR 2>/dev/null)" ]; then
+    if [ -d "$TARGET_DIR" ] && [ "$FILE_COUNT" -gt 0 ]; then
       echo "✅ 部署成功！文件已复制到 $TARGET_DIR"
-      echo "已部署文件数量: $(find "$TARGET_DIR" -type f 2>/dev/null | wc -l)"
+      echo "已部署文件列表:"
+      find "$TARGET_DIR" -type f 2>/dev/null | head -20
+      if [ "$FILE_COUNT" -gt 20 ]; then
+        echo "... (共 $FILE_COUNT 个文件)"
+      fi
     else
-      echo "❌ 部署失败！目标目录为空"
+      echo "❌ 部署失败！目标目录为空或文件数量为 0"
+      echo "目标目录路径: $TARGET_DIR"
+      echo "目标目录是否存在: $([ -d "$TARGET_DIR" ] && echo '是' || echo '否')"
       exit 1
     fi
   else
