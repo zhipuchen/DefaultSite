@@ -59,12 +59,19 @@ if command -v rsync &> /dev/null; then
     exit 1
   fi
 else
-  # 如果没有 rsync，使用 tar 创建临时目录再替换
+  # 如果没有 rsync，使用 tar 在 /tmp 创建临时目录再复制
   echo "rsync 未安装，使用 tar 命令..."
   
-  # 创建临时目录
-  TEMP_DIR="${TARGET_DIR}.tmp.$$"
+  # 在 /tmp 创建临时目录（避免权限问题）
+  TEMP_DIR="/tmp/deploy_$(basename $TARGET_DIR)_$$"
   mkdir -p "$TEMP_DIR"
+  
+  if [ ! -d "$TEMP_DIR" ]; then
+    echo "❌ 无法创建临时目录: $TEMP_DIR"
+    exit 1
+  fi
+  
+  echo "临时目录: $TEMP_DIR"
   
   # 使用 tar 复制文件到临时目录，排除指定的文件和目录
   echo "开始复制文件到临时目录..."
@@ -82,24 +89,29 @@ else
   if [ -d "$TEMP_DIR" ] && [ "$(ls -A $TEMP_DIR 2>/dev/null)" ]; then
     echo "文件复制到临时目录成功"
     
-    # 备份旧目录（如果存在）
-    OLD_DIR="${TARGET_DIR}.old.$$"
+    # 清空目标目录
+    echo "清空目标目录..."
     if [ -d "$TARGET_DIR" ]; then
-      mv "$TARGET_DIR" "$OLD_DIR" 2>/dev/null || {
-        echo "警告: 无法重命名旧目录，尝试清空..."
-        rm -rf "$TARGET_DIR"/* "$TARGET_DIR"/.[!.]* "$TARGET_DIR"/..?* 2>/dev/null
-      }
+      # 尝试多种方法清空目录
+      find "$TARGET_DIR" -mindepth 1 -delete 2>/dev/null || \
+      find "$TARGET_DIR" -mindepth 1 -exec rm -rf {} + 2>/dev/null || \
+      rm -rf "$TARGET_DIR"/* "$TARGET_DIR"/.[!.]* "$TARGET_DIR"/..?* 2>/dev/null
     fi
     
-    # 将临时目录移动到目标目录
-    mv "$TEMP_DIR" "$TARGET_DIR" 2>/dev/null || {
-      echo "尝试复制临时目录内容..."
-      cp -r "$TEMP_DIR"/* "$TARGET_DIR"/ 2>/dev/null
-      rm -rf "$TEMP_DIR"
+    # 确保目标目录存在
+    mkdir -p "$TARGET_DIR"
+    
+    # 将临时目录内容复制到目标目录
+    echo "复制文件到目标目录..."
+    cp -r "$TEMP_DIR"/* "$TARGET_DIR"/ 2>/dev/null || {
+      echo "尝试使用 find + cp 复制..."
+      cd "$TEMP_DIR" && find . -type f -exec cp --parents {} "$TARGET_DIR" \; 2>/dev/null
+      cd "$TEMP_DIR" && find . -type d -exec mkdir -p "$TARGET_DIR/{}" \; 2>/dev/null
+      cd "$TEMP_DIR" && find . -type f -exec cp {} "$TARGET_DIR/{}" \; 2>/dev/null
     }
     
-    # 清理旧目录备份
-    rm -rf "$OLD_DIR" 2>/dev/null
+    # 清理临时目录
+    rm -rf "$TEMP_DIR" 2>/dev/null
     
     # 验证部署结果
     if [ -d "$TARGET_DIR" ] && [ "$(ls -A $TARGET_DIR 2>/dev/null)" ]; then
@@ -110,7 +122,7 @@ else
       exit 1
     fi
   else
-    echo "❌ 部署失败！临时目录创建失败"
+    echo "❌ 部署失败！临时目录为空或创建失败"
     rm -rf "$TEMP_DIR" 2>/dev/null
     exit 1
   fi
