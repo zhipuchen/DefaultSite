@@ -22,6 +22,7 @@ rsync -av --delete \
   --exclude='Dockerfile' \
   --exclude='.gitignore' \
   --exclude='*.sh' \
+  --exclude='*.conf' \
   "$SOURCE_DIR/" "$TARGET_DIR/"
 
 # 检查 rsync 执行结果

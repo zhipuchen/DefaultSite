@@ -24,7 +24,7 @@ concurrency:
 jobs:
   deploy-remote:
     runs-on: self-hosted
-    environment: RackNerd
+    environment: production
 
     steps:
       - name: Checkout code
