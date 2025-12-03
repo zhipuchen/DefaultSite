@@ -29,7 +29,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug Environment Variables
+        env:
+          DEPLOY_TARGET_DIR: ${{ secrets.DEPLOY_TARGET_DIR }}
+        run: |
+          echo "=========================================="
+          echo "Repository Secrets 检查："
+          echo "=========================================="
+          if [ -z "$DEPLOY_TARGET_DIR" ]; then
+            echo "⚠️ DEPLOY_TARGET_DIR 未设置或为空"
+            echo "将使用脚本中的默认值: /home/www"
+          else
+            echo "✅ DEPLOY_TARGET_DIR 已从 Repository Secrets 读取"
+            echo "变量长度: ${#DEPLOY_TARGET_DIR} 字符"
+            echo "（Repository Secrets 的值会被 GitHub Actions 自动隐藏）"
+            # 验证路径是否有效（不显示实际路径）
+            if [ -d "$DEPLOY_TARGET_DIR" ]; then
+              echo "✅ 目标目录已存在"
+            else
+              echo "ℹ️  目标目录不存在，脚本将自动创建"
+            fi
+          fi
+          echo "=========================================="
+
       - name: Deploy to Remote Server
         env:
           DEPLOY_TARGET_DIR: ${{ secrets.DEPLOY_TARGET_DIR }}
-        run: bash ./publish.sh 
+        run: bash ./deploy.sh 

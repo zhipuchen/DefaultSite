@@ -5,8 +5,16 @@
 
 # 打印环境变量日志
 echo "=========================================="
-echo "环境变量检查："
-echo "DEPLOY_TARGET_DIR (原始值): ${DEPLOY_TARGET_DIR:-未设置}"
+echo "部署脚本 - 环境变量验证："
+echo "=========================================="
+if [ -z "${DEPLOY_TARGET_DIR}" ]; then
+  echo "📋 DEPLOY_TARGET_DIR: 未从 Repository Secrets 读取"
+  echo "   将使用脚本默认值"
+else
+  echo "✅ DEPLOY_TARGET_DIR: 已从 Repository Secrets 读取"
+  echo "   变量长度: ${#DEPLOY_TARGET_DIR} 字符"
+  echo "   （Repository Secrets 的值会被 GitHub Actions 自动隐藏为 ***）"
+fi
 echo "=========================================="
 
 # 源目录（当前工作目录）
@@ -15,8 +23,17 @@ SOURCE_DIR="."
 # 目标目录（可通过环境变量 DEPLOY_TARGET_DIR 覆盖）
 TARGET_DIR="${DEPLOY_TARGET_DIR:-/home/www}"
 
-# 打印最终使用的目标目录
-echo "最终使用的目标目录: $TARGET_DIR"
+# 打印最终使用的目标目录信息
+echo "=========================================="
+echo "部署配置："
+echo "=========================================="
+echo "源目录: $(pwd)"
+echo "目标目录: $TARGET_DIR"
+if [ -d "$TARGET_DIR" ]; then
+  echo "目标目录状态: ✅ 已存在"
+else
+  echo "目标目录状态: ℹ️  不存在，将自动创建"
+fi
 echo "=========================================="
 
 # 创建目标目录（如果不存在）
