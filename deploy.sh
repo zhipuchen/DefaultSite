@@ -59,13 +59,15 @@ if command -v rsync &> /dev/null; then
     exit 1
   fi
 else
-  # 如果没有 rsync，使用 tar 来复制并排除文件
+  # 如果没有 rsync，使用 tar 创建临时目录再替换
   echo "rsync 未安装，使用 tar 命令..."
   
-  # 先清空目标目录（保持 --delete 的行为）
-  rm -rf "$TARGET_DIR"/* "$TARGET_DIR"/.[!.]* "$TARGET_DIR"/..?* 2>/dev/null
+  # 创建临时目录
+  TEMP_DIR="${TARGET_DIR}.tmp.$$"
+  mkdir -p "$TEMP_DIR"
   
-  # 使用 tar 复制文件，排除指定的文件和目录
+  # 使用 tar 复制文件到临时目录，排除指定的文件和目录
+  echo "开始复制文件到临时目录..."
   cd "$SOURCE_DIR" && \
   tar --exclude='.git' \
       --exclude='.github' \
@@ -74,12 +76,42 @@ else
       --exclude='Dockerfile' \
       --exclude='.gitignore' \
       --exclude='*.sh' \
-      -cf - . | (cd "$TARGET_DIR" && tar -xf -)
+      -cf - . 2>/dev/null | (cd "$TEMP_DIR" && tar -xf - 2>&1 | grep -v "Cannot utime" | grep -v "Cannot open" || true)
   
-  if [ $? -eq 0 ]; then
-    echo "部署成功！文件已复制到 $TARGET_DIR"
+  # 检查临时目录是否有内容
+  if [ -d "$TEMP_DIR" ] && [ "$(ls -A $TEMP_DIR 2>/dev/null)" ]; then
+    echo "文件复制到临时目录成功"
+    
+    # 备份旧目录（如果存在）
+    OLD_DIR="${TARGET_DIR}.old.$$"
+    if [ -d "$TARGET_DIR" ]; then
+      mv "$TARGET_DIR" "$OLD_DIR" 2>/dev/null || {
+        echo "警告: 无法重命名旧目录，尝试清空..."
+        rm -rf "$TARGET_DIR"/* "$TARGET_DIR"/.[!.]* "$TARGET_DIR"/..?* 2>/dev/null
+      }
+    fi
+    
+    # 将临时目录移动到目标目录
+    mv "$TEMP_DIR" "$TARGET_DIR" 2>/dev/null || {
+      echo "尝试复制临时目录内容..."
+      cp -r "$TEMP_DIR"/* "$TARGET_DIR"/ 2>/dev/null
+      rm -rf "$TEMP_DIR"
+    }
+    
+    # 清理旧目录备份
+    rm -rf "$OLD_DIR" 2>/dev/null
+    
+    # 验证部署结果
+    if [ -d "$TARGET_DIR" ] && [ "$(ls -A $TARGET_DIR 2>/dev/null)" ]; then
+      echo "✅ 部署成功！文件已复制到 $TARGET_DIR"
+      echo "已部署文件数量: $(find "$TARGET_DIR" -type f 2>/dev/null | wc -l)"
+    else
+      echo "❌ 部署失败！目标目录为空"
+      exit 1
+    fi
   else
-    echo "部署失败！"
+    echo "❌ 部署失败！临时目录创建失败"
+    rm -rf "$TEMP_DIR" 2>/dev/null
     exit 1
   fi
 fi
