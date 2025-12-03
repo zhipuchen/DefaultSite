@@ -24,6 +24,7 @@ concurrency:
 jobs:
   deploy-remote:
     runs-on: self-hosted
+    environment: RackNerd
 
     steps:
       - name: Checkout code
@@ -31,5 +32,5 @@ jobs:
 
       - name: Deploy to Remote Server
         env:
-          DEPLOY_TARGET_DIR: ${{ secrets.DEPLOY_TARGET_DIR }}
+          DEPLOY_TARGET_DIR: ${{ vars.DEPLOY_TARGET_DIR }}
         run: bash ./deploy.sh 
