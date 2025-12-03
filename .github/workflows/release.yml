@@ -20,7 +20,7 @@ jobs:
 
       - name: Compress source code into ZIP
         run: |
-          zip -r publish.zip ./*
+          zip -r release.zip ./*
 
       - name: Generate Release Notes from Commits
         id: generate_release_notes
@@ -49,6 +49,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish.zip
-          asset_name: publish.zip
+          asset_path: ./release.zip
+          asset_name: release.zip
           asset_content_type: application/zip
